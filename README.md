@@ -11,47 +11,65 @@ This suite consists of four interconnected applications designed to streamline s
 3. **Services Aggregator** - Collects service data from multiple sources via email
 4. **Analytics Dashboard** - Interactive data visualization with pivot tables and charts
 
-## 🚀 Quick Start - Building Windows Executables
+## 🚀 Quick Start - One-Click Setup
 
-### Step 1: Install Python
+### Easiest Method: Automated Setup
 
-**Recommended: WinPython (Portable, No Admin Rights Required)**
-- Download WinPython from: https://winpython.github.io/
-- Choose version 3.10 or 3.11 (64-bit)
-- Extract to a folder (e.g., `C:\WinPython`)
-- No installation needed - fully portable!
+1. **Download this project**:
+   - Click the green "Code" button above → "Download ZIP"
+   - Or clone: `git clone https://github.com/RememberingHope/ServicesTracker.git`
 
-**Alternative: Standard Python**
-- Download from: https://www.python.org/downloads/
-- Version 3.8 or higher required
-- ✅ **Important**: Check "Add Python to PATH" during installation
+2. **Run the setup script**:
+   ```batch
+   setup.bat
+   ```
 
-### Step 2: Download This Project
+3. **That's it!** The setup script will:
+   - ✅ Check for Python (install if needed)
+   - ✅ Install all dependencies automatically
+   - ✅ Build all executables
+   - ✅ Place them in the `dist\` folder
 
-```bash
-git clone https://github.com/RememberingHope/ServicesTracker.git
-cd ServicesTracker
+### What You Get
+
+After setup completes, you'll find in the `dist\` folder:
+- `ServicesTracker.exe` - Deploy to classroom kiosks
+- `QRCodeMaker.exe` - For administrators
+- `ServicesAggregator.exe` - For data collection
+
+To run the Analytics Dashboard:
+```batch
+run_dashboard.bat
 ```
 
-Or download as ZIP from: https://github.com/RememberingHope/ServicesTracker/archive/refs/heads/main.zip
+### Manual Setup (Advanced Users)
 
-### Step 3: Build the Executables
+<details>
+<summary>Click to expand manual setup instructions</summary>
 
-1. **Install dependencies** (first time only):
-   ```batch
-   install_requirements.bat
-   ```
+#### Step 1: Install Python
 
-2. **Build all applications**:
-   ```batch
-   build_all.bat
-   ```
+**Option A: WinPython (Portable, No Admin Rights)**
+- Download from: https://winpython.github.io/
+- Extract to any folder (e.g., `C:\WinPython`)
+- Run from WinPython Command Prompt
 
-3. **Find your executables** in the `dist\` folder:
-   - `ServicesTracker.exe` - Deploy to classroom kiosks
-   - `QRCodeMaker.exe` - For administrators
-   - `ServicesAggregator.exe` - For data collection
-   - Run `run_dashboard.bat` for analytics (requires Python)
+**Option B: Standard Python**
+- Download from: https://www.python.org/downloads/
+- Version 3.8+ required
+- ✅ Check "Add Python to PATH" during installation
+
+#### Step 2: Install Dependencies
+```batch
+install_requirements.bat
+```
+
+#### Step 3: Build Executables
+```batch
+build_all.bat
+```
+
+</details>
 
 ## 📁 Project Structure
 
