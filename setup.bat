@@ -22,16 +22,18 @@ echo ============================================================
 echo   HOW THIS SCRIPT SEARCHES FOR PYTHON:
 echo ============================================================
 echo   1. 'python' command in system PATH
-echo   2. 'py' launcher (Windows Python Launcher)
-echo   3. C:\WinPython* folders (portable WinPython)
+echo   2. 'py' launcher (Windows Python Launcher)  
+echo   3. WinPython folders:
+echo      - C:\WinPython*, C:\WPy* (like C:\WPy64-31110)
+echo      - C:\python\WPy*, C:\python\WinPython*
 echo   4. C:\Python* folders (standard installs)
 echo   5. Common locations:
 echo      - C:\Anaconda3, C:\Miniconda3
 echo      - User profile Python folders
 echo.
-echo   If you have Python in a different location, you can:
-echo   - Move/copy it to C:\ root (e.g., C:\WinPython)
-echo   - Or wait for the manual path option below
+echo   If Python is not found automatically:
+echo   - You'll be prompted to enter the path manually
+echo   - Example: C:\WPy64-31110\python-3.11.1.amd64\python.exe
 echo ============================================================
 echo.
 
@@ -60,23 +62,64 @@ if %errorlevel% == 0 (
 )
 echo [NOT FOUND] 'py' launcher not available
 
-REM Method 3: Search for WinPython in C:\ root
-echo Checking: C:\WinPython* folders...
+REM Method 3: Search for WinPython in various locations
+echo Checking: WinPython/WPy folders in C:\ and C:\python\...
 set found_winpython=0
-for /d %%D in (C:\WinPython*) do (
-    set found_winpython=1
-    if exist "%%D\python-*" (
-        for /d %%P in ("%%D\python-*") do (
-            if exist "%%P\python.exe" (
-                echo [FOUND] WinPython at: %%D
-                "%%P\python.exe" --version
-                set "PYTHON_CMD=%%P\python.exe"
+
+REM Check C:\ root for WinPython patterns
+for %%P in (WinPython WPy) do (
+    for /d %%D in (C:\%%P*) do (
+        set found_winpython=1
+        echo   Checking: %%D
+        
+        REM Check for python.exe in python-* subdirectory
+        for /d %%S in ("%%D\python-*") do (
+            if exist "%%S\python.exe" (
+                echo [FOUND] WinPython at: %%S
+                "%%S\python.exe" --version
+                set "PYTHON_CMD=%%S\python.exe"
                 goto :install_deps
             )
         )
+        
+        REM Check for python.exe directly in the main folder
+        if exist "%%D\python.exe" (
+            echo [FOUND] Python at: %%D
+            "%%D\python.exe" --version
+            set "PYTHON_CMD=%%D\python.exe"
+            goto :install_deps
+        )
     )
 )
-if %found_winpython%==0 echo [NOT FOUND] No C:\WinPython* folders
+
+REM Also check C:\python\ directory for WinPython installations
+if exist "C:\python\" (
+    echo   Checking: C:\python\ subdirectories...
+    for /d %%D in (C:\python\WPy* C:\python\WinPython*) do (
+        set found_winpython=1
+        echo   Checking: %%D
+        
+        REM Check for python.exe in python-* subdirectory
+        for /d %%S in ("%%D\python-*") do (
+            if exist "%%S\python.exe" (
+                echo [FOUND] WinPython at: %%S
+                "%%S\python.exe" --version
+                set "PYTHON_CMD=%%S\python.exe"
+                goto :install_deps
+            )
+        )
+        
+        REM Check for python.exe directly
+        if exist "%%D\python.exe" (
+            echo [FOUND] Python at: %%D
+            "%%D\python.exe" --version
+            set "PYTHON_CMD=%%D\python.exe"
+            goto :install_deps
+        )
+    )
+)
+
+if %found_winpython%==0 echo [NOT FOUND] No WinPython/WPy folders in checked locations
 
 REM Method 4: Search for standard Python in C:\ root
 echo Checking: C:\Python* folders...
@@ -127,9 +170,10 @@ echo   2. Type 'download' to get Python
 echo   3. Type 'exit' to quit
 echo.
 echo Example paths:
+echo   C:\WPy64-31110\python-3.11.1.amd64\python.exe
+echo   C:\python\WPy64-31230\python-3.12.3.amd64\python.exe
 echo   C:\WinPython\python-3.11.5.amd64\python.exe
 echo   D:\Python311\python.exe
-echo   C:\MyTools\WinPython\python-3.11.5.amd64\python.exe
 echo.
 set /p user_path="Enter path to python.exe (or 'download'/'exit'): "
 
