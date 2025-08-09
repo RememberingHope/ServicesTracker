@@ -1,0 +1,29 @@
+# SPED & MTSS Services Tracking Suite - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core cryptography for PIN-based encryption
+cryptography>=41.0.0
+
+# QR Code generation and reading
+qrcode[pil]>=7.3.0
+opencv-python>=4.5.0
+
+# Image handling for QR codes
+Pillow>=9.0.0
+
+# Secure credential storage
+keyring>=23.0.0
+
+# Dashboard and Analytics
+streamlit>=1.28.0
+pandas>=1.4.0
+plotly>=5.17.0
+numpy>=1.21.0
+
+# Future enhancements (optional)
+# matplotlib>=3.5.0  # For additional visualizations
+# reportlab>=3.6.0   # For PDF report generation
+# openpyxl>=3.0.0    # For Excel export support
+
+# Note: tkinter and sqlite3 are included with Python standard library
+# Note: email, imaplib, smtplib are included with Python standard library
