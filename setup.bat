@@ -17,35 +17,58 @@ pause >nul
 REM Check for Python
 echo.
 echo [1/4] Checking for Python installation...
+echo.
+echo ============================================================
+echo   HOW THIS SCRIPT SEARCHES FOR PYTHON:
+echo ============================================================
+echo   1. 'python' command in system PATH
+echo   2. 'py' launcher (Windows Python Launcher)
+echo   3. C:\WinPython* folders (portable WinPython)
+echo   4. C:\Python* folders (standard installs)
+echo   5. Common locations:
+echo      - C:\Anaconda3, C:\Miniconda3
+echo      - User profile Python folders
+echo.
+echo   If you have Python in a different location, you can:
+echo   - Move/copy it to C:\ root (e.g., C:\WinPython)
+echo   - Or wait for the manual path option below
+echo ============================================================
+echo.
 
 REM Initialize Python command variable
 set PYTHON_CMD=
 
 REM Method 1: Check standard 'python' command in PATH
+echo Checking: 'python' command in PATH...
 python --version >nul 2>&1
 if %errorlevel% == 0 (
-    echo Found Python in PATH!
+    echo [FOUND] Python in PATH!
     python --version
     set PYTHON_CMD=python
     goto :install_deps
 )
+echo [NOT FOUND] 'python' not in PATH
 
 REM Method 2: Check 'py' launcher (common on Windows)
+echo Checking: 'py' launcher...
 py --version >nul 2>&1
 if %errorlevel% == 0 (
-    echo Found Python via py launcher!
+    echo [FOUND] Python via py launcher!
     py --version
     set PYTHON_CMD=py
     goto :install_deps
 )
+echo [NOT FOUND] 'py' launcher not available
 
 REM Method 3: Search for WinPython in C:\ root
-echo Searching for WinPython in C:\...
+echo Checking: C:\WinPython* folders...
+set found_winpython=0
 for /d %%D in (C:\WinPython*) do (
+    set found_winpython=1
     if exist "%%D\python-*" (
         for /d %%P in ("%%D\python-*") do (
             if exist "%%P\python.exe" (
-                echo Found WinPython at: %%D
+                echo [FOUND] WinPython at: %%D
                 "%%P\python.exe" --version
                 set "PYTHON_CMD=%%P\python.exe"
                 goto :install_deps
@@ -53,18 +76,24 @@ for /d %%D in (C:\WinPython*) do (
         )
     )
 )
+if %found_winpython%==0 echo [NOT FOUND] No C:\WinPython* folders
 
 REM Method 4: Search for standard Python in C:\ root
+echo Checking: C:\Python* folders...
+set found_python=0
 for /d %%D in (C:\Python*) do (
+    set found_python=1
     if exist "%%D\python.exe" (
-        echo Found Python at: %%D
+        echo [FOUND] Python at: %%D
         "%%D\python.exe" --version
         set "PYTHON_CMD=%%D\python.exe"
         goto :install_deps
     )
 )
+if %found_python%==0 echo [NOT FOUND] No C:\Python* folders
 
 REM Method 5: Check for Anaconda/Miniconda in common locations
+echo Checking: Common Anaconda/Miniconda locations...
 for %%L in (
     "C:\Anaconda3"
     "C:\Miniconda3"
@@ -76,76 +105,106 @@ for %%L in (
 ) do (
     for /d %%D in (%%L) do (
         if exist "%%D\python.exe" (
-            echo Found Python at: %%D
+            echo [FOUND] Python at: %%D
             "%%D\python.exe" --version
             set "PYTHON_CMD=%%D\python.exe"
             goto :install_deps
         )
     )
 )
+echo [NOT FOUND] No Python in common locations
 
-echo Python is not installed or not found in common locations.
 echo.
 echo ============================================================
-echo   Python Installation Options
+echo   Python not found automatically
 echo ============================================================
 echo.
-echo   1. Download portable WinPython (recommended - no admin needed)
-echo   2. Download standard Python installer (requires admin)
-echo   3. Skip Python installation (I'll install it myself)
-echo.
-set /p choice="Enter your choice (1-3): "
 
-if "%choice%"=="1" goto :winpython
-if "%choice%"=="2" goto :standard_python
-if "%choice%"=="3" goto :manual_install
+:manual_path
+echo If you have Python installed in a custom location, you can:
+echo   1. Enter the full path to python.exe
+echo   2. Type 'download' to get Python
+echo   3. Type 'exit' to quit
+echo.
+echo Example paths:
+echo   C:\WinPython\python-3.11.5.amd64\python.exe
+echo   D:\Python311\python.exe
+echo   C:\MyTools\WinPython\python-3.11.5.amd64\python.exe
+echo.
+set /p user_path="Enter path to python.exe (or 'download'/'exit'): "
 
-:winpython
-echo.
-echo ------------------------------------------------------------
-echo Please download WinPython from:
-echo https://sourceforge.net/projects/winpython/files/
-echo.
-echo Recommended: WinPython64-3.11.x.x (latest 3.11 version)
-echo.
-echo Steps:
-echo   1. Download the exe file
-echo   2. Run it to extract (no admin needed)
-echo   3. Extract to C:\WinPython or any folder
-echo   4. Run "WinPython Command Prompt.exe" from that folder
-echo   5. Navigate back to this folder and run setup.bat again
-echo.
-echo Opening download page in browser...
-start https://sourceforge.net/projects/winpython/files/
-echo.
-pause
-exit /b
+if /i "%user_path%"=="exit" exit /b
+if /i "%user_path%"=="download" goto :download_python
 
-:standard_python
-echo.
-echo ------------------------------------------------------------
-echo Please download Python from:
-echo https://www.python.org/downloads/
-echo.
-echo IMPORTANT: During installation, check "Add Python to PATH"
-echo.
-echo After installation:
-echo   1. Close this window
-echo   2. Open a new Command Prompt
-echo   3. Run setup.bat again
-echo.
-echo Opening download page in browser...
-start https://www.python.org/downloads/
-echo.
-pause
-exit /b
+REM Check if user-provided path exists
+if exist "%user_path%" (
+    echo.
+    echo Checking provided path...
+    "%user_path%" --version >nul 2>&1
+    if %errorlevel% == 0 (
+        echo [SUCCESS] Valid Python found!
+        "%user_path%" --version
+        set "PYTHON_CMD=%user_path%"
+        goto :install_deps
+    ) else (
+        echo [ERROR] File exists but doesn't appear to be valid Python
+        echo.
+        goto :manual_path
+    )
+) else (
+    echo [ERROR] File not found: %user_path%
+    echo Please check the path and try again.
+    echo.
+    goto :manual_path
+)
 
-:manual_install
+:download_python
 echo.
-echo Please install Python 3.8 or later, then run this script again.
-echo Make sure Python is added to your system PATH.
-pause
-exit /b
+echo ============================================================
+echo   Download Python Options
+echo ============================================================
+echo.
+echo   1. WinPython (Recommended - Portable, No Admin)
+echo      - Extract to C:\ for auto-detection
+echo      - Example: C:\WinPython
+echo.
+echo   2. Standard Python (Requires Admin)
+echo      - Must check "Add to PATH" during install
+echo.
+echo Which would you like to download?
+echo.
+set /p choice="Enter your choice (1 or 2): "
+
+if "%choice%"=="1" (
+    echo.
+    echo Opening WinPython download page...
+    echo.
+    echo IMPORTANT: Extract to C:\ root for auto-detection
+    echo Example: C:\WinPython or C:\WinPython64-3.11.5.0
+    echo.
+    echo After extracting, run setup.bat again.
+    echo.
+    start https://sourceforge.net/projects/winpython/files/
+    pause
+    exit /b
+)
+
+if "%choice%"=="2" (
+    echo.
+    echo Opening Python.org download page...
+    echo.
+    echo IMPORTANT: Check "Add Python to PATH" during installation!
+    echo.
+    echo After installing, run setup.bat again.
+    echo.
+    start https://www.python.org/downloads/
+    pause
+    exit /b
+)
+
+echo Invalid choice. Returning to manual path entry...
+echo.
+goto :manual_path
 
 :install_deps
 echo.
