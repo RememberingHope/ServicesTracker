@@ -1,3 +1,6 @@
+# Claude settings (local only)
+.claude/
+
 # Python
 __pycache__/
 *.py[cod]
