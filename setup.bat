@@ -17,14 +17,74 @@ pause >nul
 REM Check for Python
 echo.
 echo [1/4] Checking for Python installation...
+
+REM Initialize Python command variable
+set PYTHON_CMD=
+
+REM Method 1: Check standard 'python' command in PATH
 python --version >nul 2>&1
 if %errorlevel% == 0 (
-    echo Python is installed!
+    echo Found Python in PATH!
     python --version
+    set PYTHON_CMD=python
     goto :install_deps
 )
 
-echo Python is not installed or not in PATH.
+REM Method 2: Check 'py' launcher (common on Windows)
+py --version >nul 2>&1
+if %errorlevel% == 0 (
+    echo Found Python via py launcher!
+    py --version
+    set PYTHON_CMD=py
+    goto :install_deps
+)
+
+REM Method 3: Search for WinPython in C:\ root
+echo Searching for WinPython in C:\...
+for /d %%D in (C:\WinPython*) do (
+    if exist "%%D\python-*" (
+        for /d %%P in ("%%D\python-*") do (
+            if exist "%%P\python.exe" (
+                echo Found WinPython at: %%D
+                "%%P\python.exe" --version
+                set "PYTHON_CMD=%%P\python.exe"
+                goto :install_deps
+            )
+        )
+    )
+)
+
+REM Method 4: Search for standard Python in C:\ root
+for /d %%D in (C:\Python*) do (
+    if exist "%%D\python.exe" (
+        echo Found Python at: %%D
+        "%%D\python.exe" --version
+        set "PYTHON_CMD=%%D\python.exe"
+        goto :install_deps
+    )
+)
+
+REM Method 5: Check for Anaconda/Miniconda in common locations
+for %%L in (
+    "C:\Anaconda3"
+    "C:\Miniconda3"
+    "C:\ProgramData\Anaconda3"
+    "C:\ProgramData\Miniconda3"
+    "%USERPROFILE%\Anaconda3"
+    "%USERPROFILE%\Miniconda3"
+    "%LOCALAPPDATA%\Programs\Python\Python*"
+) do (
+    for /d %%D in (%%L) do (
+        if exist "%%D\python.exe" (
+            echo Found Python at: %%D
+            "%%D\python.exe" --version
+            set "PYTHON_CMD=%%D\python.exe"
+            goto :install_deps
+        )
+    )
+)
+
+echo Python is not installed or not found in common locations.
 echo.
 echo ============================================================
 echo   Python Installation Options
@@ -90,14 +150,17 @@ exit /b
 :install_deps
 echo.
 echo [2/4] Installing required Python packages...
+echo Using Python: %PYTHON_CMD%
 echo.
 
 REM Upgrade pip first
-python -m pip install --upgrade pip
+echo Upgrading pip...
+%PYTHON_CMD% -m pip install --upgrade pip
 
 REM Install PyInstaller
+echo.
 echo Installing PyInstaller...
-python -m pip install pyinstaller
+%PYTHON_CMD% -m pip install pyinstaller
 if %errorlevel% neq 0 (
     echo ERROR: Failed to install PyInstaller
     pause
@@ -107,7 +170,7 @@ if %errorlevel% neq 0 (
 REM Install other requirements
 echo.
 echo Installing application dependencies...
-python -m pip install -r requirements.txt
+%PYTHON_CMD% -m pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo ERROR: Failed to install dependencies
     echo Please check requirements.txt exists
@@ -122,9 +185,26 @@ echo.
 REM Check if dist folder exists, create if not
 if not exist "dist" mkdir dist
 
+REM Determine PyInstaller command based on how Python was found
+set PYINSTALLER_CMD=pyinstaller
+
+REM If we're using a full path to Python, PyInstaller might be in Scripts folder
+if not "%PYTHON_CMD%"=="python" if not "%PYTHON_CMD%"=="py" (
+    REM Extract the directory from Python path
+    for %%F in ("%PYTHON_CMD%") do set PYTHON_DIR=%%~dpF
+    if exist "%PYTHON_DIR%Scripts\pyinstaller.exe" (
+        set "PYINSTALLER_CMD=%PYTHON_DIR%Scripts\pyinstaller.exe"
+        echo Using PyInstaller at: %PYINSTALLER_CMD%
+    ) else (
+        REM Try running pyinstaller through Python
+        set "PYINSTALLER_CMD=%PYTHON_CMD% -m PyInstaller"
+        echo Using PyInstaller via: %PYINSTALLER_CMD%
+    )
+)
+
 REM Build Services Tracker
 echo Building Services Tracker...
-pyinstaller ServicesTracker.spec --noconfirm --clean
+%PYINSTALLER_CMD% ServicesTracker.spec --noconfirm --clean
 if not exist "dist\ServicesTracker.exe" (
     echo WARNING: ServicesTracker.exe build failed
     set build_failed=1
@@ -133,7 +213,7 @@ if not exist "dist\ServicesTracker.exe" (
 REM Build QR Code Maker
 echo.
 echo Building QR Code Maker...
-pyinstaller QRCodeMaker.spec --noconfirm --clean
+%PYINSTALLER_CMD% QRCodeMaker.spec --noconfirm --clean
 if not exist "dist\QRCodeMaker.exe" (
     echo WARNING: QRCodeMaker.exe build failed
     set build_failed=1
@@ -142,7 +222,7 @@ if not exist "dist\QRCodeMaker.exe" (
 REM Build Services Aggregator
 echo.
 echo Building Services Aggregator...
-pyinstaller ServicesAggregator.spec --noconfirm --clean
+%PYINSTALLER_CMD% ServicesAggregator.spec --noconfirm --clean
 if not exist "dist\ServicesAggregator.exe" (
     echo WARNING: ServicesAggregator.exe build failed
     set build_failed=1
