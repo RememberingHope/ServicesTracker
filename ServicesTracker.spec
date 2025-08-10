@@ -51,6 +51,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    version='version_info.txt',  # Optional version file
+    version=None,  # Optional version file
     icon=None  # Add 'icon.ico' if you have an icon file
 )

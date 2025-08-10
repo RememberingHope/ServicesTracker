@@ -101,16 +101,30 @@ if exist "C:\python\" (
         
         REM Check for python.exe in python-* subdirectory
         for /d %%S in ("%%D\python-*") do (
+            echo     Looking for python.exe in: %%S
             if exist "%%S\python.exe" (
-                echo [FOUND] WinPython at: %%S
+                echo [FOUND] Python executable at: %%S\python.exe
                 "%%S\python.exe" --version
                 set "PYTHON_CMD=%%S\python.exe"
                 goto :install_deps
+            ) else (
+                echo     [NOT FOUND] No python.exe in %%S
             )
         )
         
         REM Check for python.exe directly
         if exist "%%D\python.exe" (
+            echo [FOUND] Python at: %%D
+            "%%D\python.exe" --version
+            set "PYTHON_CMD=%%D\python.exe"
+            goto :install_deps
+        )
+    )
+    
+    REM Also check one level deeper for any python.exe
+    for /d %%D in (C:\python\*) do (
+        if exist "%%D\python.exe" (
+            echo   Checking: %%D
             echo [FOUND] Python at: %%D
             "%%D\python.exe" --version
             set "PYTHON_CMD=%%D\python.exe"
